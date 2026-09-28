@@ -25,6 +25,9 @@
     --pad-x: 22px;
     --topbar-h: 58px;
     --font-scale: 1;
+    /* Tamaño de la cuadrícula del rompecabezas (4 = 4x4). Se sobrescribe
+       desde JS al iniciar el puzzle para que CSS y cálculo coincidan. */
+    --puzzle-size: 4;
   }
 
   /* ---- TEMAS ---- */
@@ -825,8 +828,8 @@
     padding: 8px;
     box-shadow: var(--shadow);
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    grid-template-rows: repeat(4, 1fr);
+    grid-template-columns: repeat(var(--puzzle-size), 1fr);
+    grid-template-rows: repeat(var(--puzzle-size), 1fr);
     gap: 6px;
     touch-action: manipulation;
     user-select: none;
@@ -838,13 +841,11 @@
 
   .puzzle-tile {
     position: relative;
-    background: var(--accent-soft);
-    border-radius: 8px;
     overflow: hidden;
+    border-radius: 8px;
+    background: var(--accent-soft);
     cursor: pointer;
     transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
-    background-size: 400% 400%;
-    background-repeat: no-repeat;
     -webkit-tap-highlight-color: transparent;
   }
   .puzzle-tile:active { transform: scale(.96); }
@@ -879,8 +880,30 @@
     100% { box-shadow: inset 0 0 0 2px var(--accent); opacity: 1; }
   }
 
+  /* Wrapper de la imagen dentro de cada pieza.
+     El tamaño real de la imagen interna se calcula con var(--puzzle-size),
+     así no hay valores hardcodeados en CSS. */
+  .puzzle-img-wrapper {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: inherit;
+  }
+  .puzzle-img-wrapper img {
+    position: absolute;
+    top: 0; left: 0;
+    width: calc(100% * var(--puzzle-size));
+    height: calc(100% * var(--puzzle-size));
+    max-width: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    pointer-events: none;
+    display: block;
+  }
+
   .puzzle-fallback {
-    width: 100%; height: 100%;
+    position: absolute;
+    inset: 0;
     display: grid; place-items: center;
     font-family: var(--font-serif);
     font-weight: 700;
@@ -1194,10 +1217,15 @@
    75° W — Experiencia interactiva
    ================================================================ */
 
-const INSTAGRAM_URL = "https://www.instagram.com/75gradosw/";
-const LOGO_URL      = "";
-/* Imagen del logo que se usará en el rompecabezas 15. */
-const PUZZLE_IMAGE_URL ="https://picsum.photos/600";  
+/* ----------------------------------------------------------------
+   CONFIGURACIÓN EDITABLE
+   ---------------------------------------------------------------- */
+const INSTAGRAM_URL    = "https://www.instagram.com/75gradosw/";
+const LOGO_URL         = "";  // opcional: ruta del logo de la marca (topbar)
+const PUZZLE_IMAGE_URL = "https://raw.githubusercontent.com/elmismogusdesiempre/75gradosactivacion/main/cuadrado.jpg";
+/* Tamaño de la cuadrícula del rompecabezas. 4 => 4x4 (15 piezas + hueco).
+   Cambiar este valor re-configura automáticamente CSS y lógica. */
+const PUZZLE_GRID_SIZE = 4;
 
 const INSTAGRAM_SVG = `
   <svg class="ig-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2304,17 +2332,21 @@ function showBaristaResults(ordersDone) {
    ================================================================ */
 
 function showLogoPuzzle() {
-  const SIZE = 4;                    // 4x4 = 15 piezas + 1 hueco
+  const SIZE = PUZZLE_GRID_SIZE;             // 4 por defecto
   const TOTAL = SIZE * SIZE;
-  const EMPTY = TOTAL - 1;           // el hueco es la última celda (índice 15)
+  const EMPTY = TOTAL - 1;                    // el hueco vive en el último índice
   const speedMult = settings.speed === "lenta" ? 0.85
                   : settings.speed === "rapida" ? 1.25
                   : 1;
-  const DURATION = 60 / speedMult;   // 1 minuto (ajustado por velocidad)
+  const DURATION = 60 / speedMult;            // 1 minuto (ajustado por velocidad)
 
-  // Estado: array de longitud 16 donde board[pos] = número de pieza (0..14) o EMPTY
-  // La posición objetivo de la pieza i es el índice i (es decir: la pieza i debe
-  // quedar en la celda i). El hueco siempre en la celda 15.
+  // Sincronizar el CSS con el tamaño de cuadrícula elegido.
+  // Sin valores hardcodeados: el CSS lee var(--puzzle-size) para
+  // grid-template-columns, grid-template-rows y el tamaño de la imagen.
+  document.documentElement.style.setProperty("--puzzle-size", String(SIZE));
+
+  // Estado del tablero: array donde board[pos] = número de pieza (0..EMPTY-1) o EMPTY.
+  // La posición objetivo de la pieza i es el índice i.
   let board = [];
 
   // Métricas
@@ -2324,7 +2356,6 @@ function showLogoPuzzle() {
   let solved = false;
   let locked = false;
   let timerId = null;
-  let imgLoaded = false;
   let imgFailed = false;
 
   // --- Utilidades del puzzle ---
@@ -2335,34 +2366,33 @@ function showLogoPuzzle() {
     return true;
   }
 
-  function neighborsOf(emptyPos) {
-    const r = Math.floor(emptyPos / SIZE);
-    const c = emptyPos % SIZE;
+  function neighborsOf(pos) {
+    const r = Math.floor(pos / SIZE);
+    const c = pos % SIZE;
     const list = [];
-    if (r > 0) list.push(emptyPos - SIZE);
-    if (r < SIZE - 1) list.push(emptyPos + SIZE);
-    if (c > 0) list.push(emptyPos - 1);
-    if (c < SIZE - 1) list.push(emptyPos + 1);
+    if (r > 0) list.push(pos - SIZE);
+    if (r < SIZE - 1) list.push(pos + SIZE);
+    if (c > 0) list.push(pos - 1);
+    if (c < SIZE - 1) list.push(pos + 1);
     return list;
   }
 
-  // Genera un tablero resoluble haciendo N movimientos al azar desde la solución
+  // Baraja haciendo N movimientos al azar desde la solución.
+  // Garantiza que el puzzle resultante sea siempre resoluble.
   function shuffleBoard() {
     board = [];
     for (let i = 0; i < TOTAL; i++) board[i] = i;
     let emptyPos = EMPTY;
-    const shuffleMoves = 220;
     let lastMove = -1;
+    const shuffleMoves = Math.max(180, SIZE * SIZE * 14);
     for (let i = 0; i < shuffleMoves; i++) {
       const neigh = neighborsOf(emptyPos).filter(p => p !== lastMove);
       const target = neigh[Math.floor(Math.random() * neigh.length)];
-      // Intercambiar
       board[emptyPos] = board[target];
       board[target] = EMPTY;
       lastMove = emptyPos;
       emptyPos = target;
     }
-    // Si por casualidad quedó resuelto, barajar de nuevo
     if (isSolved()) shuffleBoard();
   }
 
@@ -2390,7 +2420,6 @@ function showLogoPuzzle() {
     beep(520 + (moves % 5) * 20, 0.04, 0.02);
     renderBoard(true, pos, e);
 
-    // Comprobar si quedó resuelto
     if (isSolved()) {
       solved = true;
       finishPuzzle();
@@ -2398,14 +2427,26 @@ function showLogoPuzzle() {
   }
 
   // --- Render ---
-  function tileBgStyle(pieceIndex) {
-    // pieceIndex es 0..14. Calculamos fila/col en el tablero objetivo.
+  // Cada pieza muestra la imagen dentro de un wrapper con overflow hidden.
+  // La imagen se dibuja a "SIZE × SIZE" veces el tamaño de la celda y se
+  // desplaza con transform: translate() para que solo se vea el fragmento
+  // correspondiente a esta pieza.
+  function tileInner(pieceIndex) {
     const row = Math.floor(pieceIndex / SIZE);
     const col = pieceIndex % SIZE;
-    // background-size 400% x 400% sobre el tamaño de la pieza (que es 1/4 del board)
-    const posX = (col / (SIZE - 1)) * 100;
-    const posY = (row / (SIZE - 1)) * 100;
-    return `background-image:url("${PUZZLE_IMAGE_URL}");background-size:${SIZE * 100}% ${SIZE * 100}%;background-position:${posX}% ${posY}%;`;
+    // Desplazamiento en porcentaje del tamaño de la CELDA.
+    // Al mover la imagen (que mide SIZE × celda) en -col*100% y -row*100%
+    // estamos mostrando exactamente el fragmento (row, col).
+    const tx = -(col * 100);
+    const ty = -(row * 100);
+    return `
+      <div class="puzzle-img-wrapper">
+        <img src="${PUZZLE_IMAGE_URL}"
+             alt=""
+             draggable="false"
+             style="transform: translate(${tx}%, ${ty}%);" />
+      </div>
+    `;
   }
 
   function renderBoard(animate, movedPos, vacatedPos) {
@@ -2419,17 +2460,10 @@ function showLogoPuzzle() {
       }
       const movable = canMove(pos) ? " movable" : "";
       const pop = isMoved ? " just-moved" : "";
-      // Si la imagen falló, mostramos un fallback de color plano + numerito
-      let inner = "";
-      let styleAttr;
-      if (imgFailed) {
-        styleAttr = "";
-        const hue = (piece * 24) % 360;
-        inner = `<div class="puzzle-fallback" style="background:var(--accent-soft);color:var(--accent);">${piece + 1}</div>`;
-      } else {
-        styleAttr = tileBgStyle(piece);
-      }
-      return `<div class="puzzle-tile${movable}${pop}" data-pos="${pos}" style="${styleAttr}">${inner}</div>`;
+      const inner = imgFailed
+        ? `<div class="puzzle-fallback">${piece + 1}</div>`
+        : tileInner(piece);
+      return `<div class="puzzle-tile${movable}${pop}" data-pos="${pos}">${inner}</div>`;
     }).join("");
 
     boardEl.innerHTML = html;
@@ -2452,7 +2486,6 @@ function showLogoPuzzle() {
       timeLabel.textContent = Math.max(0, Math.ceil(timeLeft)) + "s";
     }
   }
-
   function tick(dt) {
     if (finished) return;
     timeLeft -= dt;
@@ -2465,37 +2498,31 @@ function showLogoPuzzle() {
     updateTimerUI();
   }
 
-  // --- Fin de partida ---
   function finishPuzzle() {
     if (finished) return;
     finished = true;
     clearInterval(timerId);
 
     const wasSolved = solved;
-    // Aplicar animación "solved" a todas las piezas si ganó
     if (wasSolved) {
-      const tiles = document.querySelectorAll(".puzzle-tile:not(.empty)");
-      tiles.forEach(t => t.classList.add("solved"));
+      document.querySelectorAll(".puzzle-tile:not(.empty)").forEach(t => t.classList.add("solved"));
       beep(880, 0.12, 0.04);
       setTimeout(() => beep(1040, 0.14, 0.04), 140);
     } else {
       beep(240, 0.18, 0.03);
     }
 
-    // Pequeña pausa para que se aprecie el estado final
-    setTimeout(() => {
-      showPuzzleResults(wasSolved, moves, timeLeft, DURATION);
-    }, wasSolved ? 900 : 400);
+    setTimeout(() => showPuzzleResults(wasSolved, moves, timeLeft, DURATION), wasSolved ? 900 : 400);
   }
 
-  function showPuzzleResults(wasSolved, moves, remaining, total) {
+  function showPuzzleResults(wasSolved, movesCount, remaining, total) {
     const usedTime = Math.round(total - remaining);
     let headline, sub;
     if (wasSolved) {
-      if (moves <= 40)      headline = "Resuelto. Y con estilo.";
-      else if (moves <= 90) headline = "Resuelto. Nada mal.";
-      else                  headline = "Resuelto. Lo importante es que quedó.";
-      sub = `Armaste el logo 75° W en ${moves} ${moves === 1 ? "movimiento" : "movimientos"} y ${usedTime} segundos.`;
+      if (movesCount <= 40)      headline = "Resuelto. Y con estilo.";
+      else if (movesCount <= 90) headline = "Resuelto. Nada mal.";
+      else                       headline = "Resuelto. Lo importante es que quedó.";
+      sub = `Armaste el logo 75° W en ${movesCount} ${movesCount === 1 ? "movimiento" : "movimientos"} y ${usedTime} segundos.`;
     } else {
       headline = "Se acabó el tiempo.";
       sub = `El logo quedó a medio armar. La próxima sale.`;
@@ -2550,22 +2577,19 @@ function showLogoPuzzle() {
     </section>
   `);
 
-  // Detectar si la imagen carga bien; si no, activar fallback visual.
+  // Detección de imagen: si carga, se usa; si no, fallback con número.
   const testImg = new Image();
   testImg.onload = () => {
-    imgLoaded = true;
     imgFailed = false;
-    // Si ya hay tablero renderizado, repintarlo con la imagen real.
-    if (document.getElementById("puzzle-board")) renderBoard(false);
-    // Actualizar el preview (por si el src por defecto falló)
+    const boardEl = document.getElementById("puzzle-board");
+    if (boardEl) renderBoard(false);
     const prev = document.getElementById("puzzle-preview-img");
     if (prev) prev.innerHTML = `<img src="${PUZZLE_IMAGE_URL}" alt="Logo 75° W" />`;
   };
   testImg.onerror = () => {
-    imgLoaded = false;
     imgFailed = true;
-    if (document.getElementById("puzzle-board")) renderBoard(false);
-    // Fallback tipográfico en el preview
+    const boardEl = document.getElementById("puzzle-board");
+    if (boardEl) renderBoard(false);
     const prev = document.getElementById("puzzle-preview-img");
     if (prev) {
       prev.innerHTML = `<div style="display:grid;place-items:center;width:100%;height:100%;font-family:var(--font-serif);font-weight:700;color:var(--accent);font-size:14px;letter-spacing:.08em;">75° W</div>`;
@@ -2579,7 +2603,7 @@ function showLogoPuzzle() {
   updateMovesUI();
   updateTimerUI();
 
-  // Click / tap en las piezas
+  // Interacción: clic/tap en cualquier pieza
   const boardEl = document.getElementById("puzzle-board");
   boardEl.addEventListener("click", (e) => {
     const tile = e.target.closest(".puzzle-tile");
@@ -2596,7 +2620,6 @@ function showLogoPuzzle() {
     updateMovesUI();
     shuffleBoard();
     renderBoard(false);
-    // Reiniciar temporizador
     timeLeft = DURATION;
     updateTimerUI();
   });
