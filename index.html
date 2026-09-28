@@ -65,7 +65,6 @@
     --border: #342C24; --shadow: 0 1px 2px rgba(0,0,0,.3);
   }
 
-  /* Escalas tipográficas */
   html[data-fs="small"] { --font-scale: 0.92; }
   html[data-fs="normal"] { --font-scale: 1; }
   html[data-fs="large"] { --font-scale: 1.12; }
@@ -395,7 +394,7 @@
   .end-actions { display: flex; flex-direction: column; gap: 10px; }
 
   .btn {
-    display: flex; align-items: center; justify-content: center; gap: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
     width: 100%; padding: 18px 22px;
     border-radius: var(--radius-btn);
     font-size: calc(17px * var(--font-scale));
@@ -411,6 +410,14 @@
   .btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
   .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
   .btn-sm { padding: 13px 16px; font-size: calc(15px * var(--font-scale)); font-weight: 600; }
+
+  .btn-primary .ig-logo {
+    width: calc(22px * var(--font-scale));
+    height: calc(22px * var(--font-scale));
+    flex: 0 0 auto;
+    display: block;
+    color: currentColor;
+  }
 
   .end-fine {
     margin: 20px 0 0; font-size: calc(13px * var(--font-scale));
@@ -641,135 +648,253 @@
   .barista-serve:active { transform: scale(.985); }
   .barista-serve:hover { opacity: .92; }
 
-  /* ---- Tarjeta emergente (feedback + resumen de turno) ---- */
   .barista-pop {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
     padding: 26px;
     background: rgba(20,14,10,.28);
-    backdrop-filter: blur(3px);
-    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
     z-index: 120;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0; pointer-events: none;
     transition: opacity .25s ease;
   }
   .barista-pop.show { opacity: 1; pointer-events: auto; }
 
   .barista-pop-card {
-    background: #FFFFFF;
-    color: #1F1813;
+    background: #FFFFFF; color: #1F1813;
     border-radius: 20px;
     padding: 40px 30px 36px;
-    max-width: 420px;
-    width: 100%;
+    max-width: 420px; width: 100%;
     text-align: center;
     box-shadow: 0 20px 60px rgba(0,0,0,.28), 0 2px 8px rgba(0,0,0,.08);
     transform: translateY(14px) scale(.96);
     transition: transform .32s cubic-bezier(.22,.9,.32,1.15);
   }
-  .barista-pop.show .barista-pop-card {
-    transform: none;
-  }
+  .barista-pop.show .barista-pop-card { transform: none; }
   .barista-pop-ico {
     font-family: var(--font-emoji);
     font-size: calc(56px * var(--font-scale));
-    line-height: 1;
-    margin-bottom: 16px;
-    display: block;
+    line-height: 1; margin-bottom: 16px; display: block;
   }
   .barista-pop-title {
     font-family: var(--font-sans);
     font-size: calc(clamp(26px, 7.4vw, 34px) * var(--font-scale));
-    line-height: 1.2;
-    font-weight: 800;
+    line-height: 1.2; font-weight: 800;
     letter-spacing: -.015em;
-    margin: 0 0 8px;
-    color: #1F1813;
+    margin: 0 0 8px; color: #1F1813;
   }
   .barista-pop-title.ok { color: #7A4A22; }
   .barista-pop-title.bad { color: #B15C3C; }
   .barista-pop-sub {
     font-family: var(--font-sans);
     font-size: calc(16px * var(--font-scale));
-    line-height: 1.55;
-    color: #6B5B4D;
-    margin: 0;
-    font-weight: 500;
+    line-height: 1.55; color: #6B5B4D;
+    margin: 0; font-weight: 500;
   }
-
-  /* Variante de resumen final: un poco más grande y con métricas */
   .barista-pop-card.summary {
-    padding: 48px 30px 40px;
-    max-width: 440px;
+    padding: 48px 30px 40px; max-width: 440px;
   }
   .barista-pop-card.summary .barista-pop-ico {
-    font-size: calc(72px * var(--font-scale));
-    margin-bottom: 20px;
+    font-size: calc(72px * var(--font-scale)); margin-bottom: 20px;
   }
   .barista-pop-card.summary .barista-pop-title {
     font-size: calc(clamp(30px, 8.4vw, 40px) * var(--font-scale));
     margin-bottom: 6px;
   }
   .barista-pop-card.summary .barista-pop-sub {
-    font-size: calc(17px * var(--font-scale));
-    margin-bottom: 26px;
+    font-size: calc(17px * var(--font-scale)); margin-bottom: 26px;
   }
   .barista-pop-stats {
-    display: flex;
-    justify-content: center;
-    gap: 22px;
+    display: flex; justify-content: center; gap: 22px;
     padding: 22px 12px;
     border-top: 1px solid #EFE7DC;
     border-bottom: 1px solid #EFE7DC;
     margin-bottom: 24px;
   }
   .barista-pop-stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    min-width: 90px;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 4px; min-width: 90px;
   }
   .barista-pop-stat-value {
     font-family: var(--font-sans);
     font-size: calc(clamp(34px, 9vw, 44px) * var(--font-scale));
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -.02em;
-    color: #7A4A22;
+    font-weight: 800; line-height: 1;
+    letter-spacing: -.02em; color: #7A4A22;
     font-variant-numeric: tabular-nums;
   }
   .barista-pop-stat-label {
     font-family: var(--font-sans);
     font-size: calc(12px * var(--font-scale));
-    font-weight: 700;
-    letter-spacing: .16em;
-    text-transform: uppercase;
-    color: #9C8875;
+    font-weight: 700; letter-spacing: .16em;
+    text-transform: uppercase; color: #9C8875;
   }
   .barista-pop-cta {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    display: inline-flex; align-items: center; justify-content: center;
     padding: 14px 26px;
-    background: #1F1813;
-    color: #FFFFFF;
-    border: none;
-    border-radius: var(--radius-btn);
+    background: #1F1813; color: #FFFFFF;
+    border: none; border-radius: var(--radius-btn);
     font-family: var(--font-sans);
     font-size: calc(15.5px * var(--font-scale));
-    font-weight: 700;
-    letter-spacing: .04em;
+    font-weight: 700; letter-spacing: .04em;
     cursor: pointer;
     transition: transform .12s ease, opacity .2s ease;
     -webkit-tap-highlight-color: transparent;
   }
   .barista-pop-cta:active { transform: scale(.97); }
   .barista-pop-cta:hover { opacity: .9; }
+
+  /* ============================================================
+     JUEGO — ROMPECABEZAS 15 (LOGO 75° W)
+     ============================================================ */
+  .puzzle-hud {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 14px; padding: 0 2px; gap: 14px;
+  }
+  .puzzle-moves {
+    font-family: var(--font-serif); font-size: calc(16px * var(--font-scale));
+    color: var(--muted); letter-spacing: .02em;
+    font-variant-numeric: tabular-nums;
+  }
+  .puzzle-moves strong {
+    color: var(--text); font-weight: 700;
+    font-size: calc(18.5px * var(--font-scale)); letter-spacing: .04em;
+  }
+  .puzzle-time {
+    font-size: calc(14px * var(--font-scale)); color: var(--muted);
+    letter-spacing: .16em; text-transform: uppercase;
+    font-variant-numeric: tabular-nums; font-weight: 600;
+  }
+  .puzzle-timerbar {
+    width: 100%; height: 3px;
+    background: var(--border);
+    border-radius: 3px; overflow: hidden;
+    margin-bottom: 22px;
+  }
+  .puzzle-timerbar > span {
+    display: block; height: 100%;
+    width: 100%; background: var(--accent);
+    border-radius: 3px;
+    transition: width .25s linear, background .3s ease;
+  }
+  .puzzle-timerbar.warn > span { background: #C77C4A; }
+
+  .puzzle-preview {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 12px 14px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .puzzle-preview-label {
+    font-size: calc(11.5px * var(--font-scale));
+    letter-spacing: .18em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700; line-height: 1.3;
+    flex: 0 0 auto;
+  }
+  .puzzle-preview-img {
+    width: 60px; height: 60px;
+    border-radius: 10px;
+    background: var(--accent-soft);
+    overflow: hidden;
+    flex: 0 0 auto;
+    display: grid; place-items: center;
+    font-family: var(--font-serif);
+    color: var(--accent);
+    font-weight: 700; font-size: 14px;
+    letter-spacing: .08em;
+  }
+  .puzzle-preview-img img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .puzzle-preview-text {
+    font-size: calc(13.5px * var(--font-scale));
+    color: var(--muted); line-height: 1.45;
+    min-width: 0;
+  }
+  .puzzle-preview-text strong { color: var(--text); font-weight: 700; }
+
+  .puzzle-board {
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 78vw;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 8px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: repeat(4, 1fr);
+    gap: 6px;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  @media (min-width: 540px) {
+    .puzzle-board { max-height: 500px; }
+  }
+
+  .puzzle-tile {
+    position: relative;
+    background: var(--accent-soft);
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform .12s ease, background .2s ease, box-shadow .2s ease;
+    background-size: 400% 400%;
+    background-repeat: no-repeat;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .puzzle-tile:active { transform: scale(.96); }
+  .puzzle-tile.empty {
+    background: transparent;
+    cursor: default;
+    box-shadow: none;
+    pointer-events: none;
+  }
+  .puzzle-tile:not(.empty)::after {
+    content: "";
+    position: absolute; inset: 0;
+    border-radius: 8px;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.06);
+    pointer-events: none;
+  }
+  .puzzle-tile.movable {
+    box-shadow: inset 0 0 0 2px var(--accent), 0 2px 6px rgba(0,0,0,.06);
+  }
+  .puzzle-tile.just-moved {
+    animation: tilePop .22s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes tilePop {
+    from { transform: scale(1.06); }
+    to   { transform: scale(1); }
+  }
+  .puzzle-tile.solved {
+    animation: tileSolved .6s ease both;
+  }
+  @keyframes tileSolved {
+    0%   { box-shadow: inset 0 0 0 2px var(--accent); }
+    100% { box-shadow: inset 0 0 0 2px var(--accent); opacity: 1; }
+  }
+
+  .puzzle-fallback {
+    width: 100%; height: 100%;
+    display: grid; place-items: center;
+    font-family: var(--font-serif);
+    font-weight: 700;
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-size: calc(14px * var(--font-scale));
+    letter-spacing: .1em;
+  }
+
+  .puzzle-actions {
+    display: flex; gap: 10px;
+    margin-top: 18px;
+  }
+  .puzzle-actions .btn { padding: 14px 18px; font-size: calc(15px * var(--font-scale)); }
 
   /* ============================================================
      SPLASH
@@ -1069,8 +1194,20 @@
    75° W — Experiencia interactiva
    ================================================================ */
 
-const INSTAGRAM_URL = "PEGAR_AQUI_URL";
+const INSTAGRAM_URL = "https://www.instagram.com/75gradosw/";
 const LOGO_URL      = "";
+/* Imagen del logo que se usará en el rompecabezas 15. */
+const PUZZLE_IMAGE_URL = "https://75gradosactivacion.vercel.app/cuadrado.jpg";
+
+const INSTAGRAM_SVG = `
+  <svg class="ig-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"
+       aria-hidden="true" focusable="false">
+    <rect x="3" y="3" width="18" height="18" rx="5" ry="5"/>
+    <circle cx="12" cy="12" r="4"/>
+    <circle cx="17.2" cy="6.8" r="1.05" fill="currentColor" stroke="none"/>
+  </svg>
+`;
 
 /* ----------------------------------------------------------------
    ESTADO Y PREFERENCIAS
@@ -1213,9 +1350,10 @@ const EXPERIENCE_NAMES = {
   personality: "¿Qué tipo de cafetero eres?",
   moment: "Tu momento 75° W",
   game: "Atrapa el café",
-  barista: "Barista por 1 minuto"
+  barista: "Barista por 1 minuto",
+  puzzle: "Arma el logo 75° W"
 };
-const ALL_EXPERIENCES = ["personality", "moment", "game", "barista"];
+const ALL_EXPERIENCES = ["personality", "moment", "game", "barista", "puzzle"];
 function selectRandomExperience(exclude) {
   const pool = exclude ? ALL_EXPERIENCES.filter(x => x !== exclude) : ALL_EXPERIENCES;
   return pool[Math.floor(Math.random() * pool.length)];
@@ -1226,6 +1364,7 @@ function launchExperience(id) {
   else if (id === "moment") showCoffeeMoment();
   else if (id === "game") showCatchTheCoffee();
   else if (id === "barista") showBaristaChallenge();
+  else if (id === "puzzle") showLogoPuzzle();
 }
 
 /* ----------------------------------------------------------------
@@ -1916,7 +2055,6 @@ function showBaristaChallenge() {
     return msg;
   }
 
-  // ---- Tarjeta emergente (feedback corto + resumen final) ----
   function showBaristaPop(kind, ico, title, sub, options) {
     const prev = document.querySelector(".barista-pop");
     if (prev) prev.remove();
@@ -1929,7 +2067,6 @@ function showBaristaChallenge() {
                   : "";
 
     if (opts.summary) {
-      // Variante: resumen de turno con métricas + CTA
       pop.innerHTML = `
         <div class="barista-pop-card summary">
           <span class="barista-pop-ico">${ico}</span>
@@ -1958,7 +2095,6 @@ function showBaristaChallenge() {
     requestAnimationFrame(() => pop.classList.add("show"));
 
     if (opts.summary) {
-      // El usuario controla el cierre con el botón "Continuar"
       const cta = pop.querySelector("#barista-pop-cta");
       const close = () => {
         pop.classList.remove("show");
@@ -1971,10 +2107,8 @@ function showBaristaChallenge() {
         beep(640, 0.08, 0.03);
         close();
       });
-      // Guardar el cierre por si hay que forzarlo desde fuera (cleanup)
       pop.__closeSummary = close;
     } else {
-      // Feedback corto: autocierre
       setTimeout(() => {
         pop.classList.remove("show");
         setTimeout(() => { if (pop.parentNode) pop.remove(); }, 280);
@@ -2033,11 +2167,9 @@ function showBaristaChallenge() {
     if (finished) return;
     finished = true;
     clearInterval(timerId);
-    // Quitar cualquier popup corto activo antes de mostrar el resumen
     const pop = document.querySelector(".barista-pop");
     if (pop && !pop.__closeSummary) pop.remove();
 
-    // Encabezado del resumen según desempeño
     let summaryTitle;
     if (ordersDone >= 15)      summaryTitle = "Nada mal, barista.";
     else if (ordersDone >= 8)  summaryTitle = "Buen turno.";
@@ -2047,7 +2179,6 @@ function showBaristaChallenge() {
       ? "No alcanzaste a servir ninguno. La próxima sale."
       : `Preparaste ${ordersDone} ${ordersDone === 1 ? "pedido" : "pedidos"} en un minuto.`;
 
-    // Mostrar tarjeta emergente de resumen; al cerrar, ir a la pantalla final
     showBaristaPop("summary", "☕", summaryTitle, sub, {
       summary: true,
       orders: ordersDone,
@@ -2058,7 +2189,6 @@ function showBaristaChallenge() {
     beep(760, 0.12, 0.035);
   }
 
-  // ---- Render principal ----
   setView(`
     <section class="exp">
       <p class="eyebrow">Experiencia 75° W</p>
@@ -2170,12 +2300,333 @@ function showBaristaResults(ordersDone) {
 }
 
 /* ================================================================
+   EXPERIENCIA 5 — ROMPECABEZAS 15 (ARMA EL LOGO 75° W)
+   ================================================================ */
+
+function showLogoPuzzle() {
+  const SIZE = 4;                    // 4x4 = 15 piezas + 1 hueco
+  const TOTAL = SIZE * SIZE;
+  const EMPTY = TOTAL - 1;           // el hueco es la última celda (índice 15)
+  const speedMult = settings.speed === "lenta" ? 0.85
+                  : settings.speed === "rapida" ? 1.25
+                  : 1;
+  const DURATION = 60 / speedMult;   // 1 minuto (ajustado por velocidad)
+
+  // Estado: array de longitud 16 donde board[pos] = número de pieza (0..14) o EMPTY
+  // La posición objetivo de la pieza i es el índice i (es decir: la pieza i debe
+  // quedar en la celda i). El hueco siempre en la celda 15.
+  let board = [];
+
+  // Métricas
+  let moves = 0;
+  let timeLeft = DURATION;
+  let finished = false;
+  let solved = false;
+  let locked = false;
+  let timerId = null;
+  let imgLoaded = false;
+  let imgFailed = false;
+
+  // --- Utilidades del puzzle ---
+  function isSolved() {
+    for (let i = 0; i < TOTAL; i++) {
+      if (board[i] !== i) return false;
+    }
+    return true;
+  }
+
+  function neighborsOf(emptyPos) {
+    const r = Math.floor(emptyPos / SIZE);
+    const c = emptyPos % SIZE;
+    const list = [];
+    if (r > 0) list.push(emptyPos - SIZE);
+    if (r < SIZE - 1) list.push(emptyPos + SIZE);
+    if (c > 0) list.push(emptyPos - 1);
+    if (c < SIZE - 1) list.push(emptyPos + 1);
+    return list;
+  }
+
+  // Genera un tablero resoluble haciendo N movimientos al azar desde la solución
+  function shuffleBoard() {
+    board = [];
+    for (let i = 0; i < TOTAL; i++) board[i] = i;
+    let emptyPos = EMPTY;
+    const shuffleMoves = 220;
+    let lastMove = -1;
+    for (let i = 0; i < shuffleMoves; i++) {
+      const neigh = neighborsOf(emptyPos).filter(p => p !== lastMove);
+      const target = neigh[Math.floor(Math.random() * neigh.length)];
+      // Intercambiar
+      board[emptyPos] = board[target];
+      board[target] = EMPTY;
+      lastMove = emptyPos;
+      emptyPos = target;
+    }
+    // Si por casualidad quedó resuelto, barajar de nuevo
+    if (isSolved()) shuffleBoard();
+  }
+
+  function emptyPos() {
+    return board.indexOf(EMPTY);
+  }
+
+  function canMove(pos) {
+    const e = emptyPos();
+    return neighborsOf(e).includes(pos);
+  }
+
+  function moveTile(pos) {
+    if (finished || locked) return;
+    if (!canMove(pos)) {
+      beep(180, 0.06, 0.02);
+      return;
+    }
+    const e = emptyPos();
+    const tmp = board[pos];
+    board[pos] = board[e];
+    board[e] = tmp;
+    moves++;
+    updateMovesUI();
+    beep(520 + (moves % 5) * 20, 0.04, 0.02);
+    renderBoard(true, pos, e);
+
+    // Comprobar si quedó resuelto
+    if (isSolved()) {
+      solved = true;
+      finishPuzzle();
+    }
+  }
+
+  // --- Render ---
+  function tileBgStyle(pieceIndex) {
+    // pieceIndex es 0..14. Calculamos fila/col en el tablero objetivo.
+    const row = Math.floor(pieceIndex / SIZE);
+    const col = pieceIndex % SIZE;
+    // background-size 400% x 400% sobre el tamaño de la pieza (que es 1/4 del board)
+    const posX = (col / (SIZE - 1)) * 100;
+    const posY = (row / (SIZE - 1)) * 100;
+    return `background-image:url("${PUZZLE_IMAGE_URL}");background-size:${SIZE * 100}% ${SIZE * 100}%;background-position:${posX}% ${posY}%;`;
+  }
+
+  function renderBoard(animate, movedPos, vacatedPos) {
+    const boardEl = document.getElementById("puzzle-board");
+    if (!boardEl) return;
+
+    const html = board.map((piece, pos) => {
+      const isMoved = animate && (pos === movedPos || pos === vacatedPos);
+      if (piece === EMPTY) {
+        return `<div class="puzzle-tile empty" data-pos="${pos}"></div>`;
+      }
+      const movable = canMove(pos) ? " movable" : "";
+      const pop = isMoved ? " just-moved" : "";
+      // Si la imagen falló, mostramos un fallback de color plano + numerito
+      let inner = "";
+      let styleAttr;
+      if (imgFailed) {
+        styleAttr = "";
+        const hue = (piece * 24) % 360;
+        inner = `<div class="puzzle-fallback" style="background:var(--accent-soft);color:var(--accent);">${piece + 1}</div>`;
+      } else {
+        styleAttr = tileBgStyle(piece);
+      }
+      return `<div class="puzzle-tile${movable}${pop}" data-pos="${pos}" style="${styleAttr}">${inner}</div>`;
+    }).join("");
+
+    boardEl.innerHTML = html;
+  }
+
+  function updateMovesUI() {
+    const el = document.getElementById("puzzle-moves");
+    if (el) el.textContent = String(moves).padStart(2, "0");
+  }
+  function updateTimerUI() {
+    const bar = document.getElementById("puzzle-timerbar");
+    const timeLabel = document.getElementById("puzzle-time");
+    if (bar) {
+      const pct = Math.max(0, Math.min(1, timeLeft / DURATION));
+      const fill = bar.querySelector("span");
+      if (fill) fill.style.width = (pct * 100).toFixed(1) + "%";
+      bar.classList.toggle("warn", timeLeft <= 10);
+    }
+    if (timeLabel) {
+      timeLabel.textContent = Math.max(0, Math.ceil(timeLeft)) + "s";
+    }
+  }
+
+  function tick(dt) {
+    if (finished) return;
+    timeLeft -= dt;
+    if (timeLeft <= 0) {
+      timeLeft = 0;
+      updateTimerUI();
+      finishPuzzle();
+      return;
+    }
+    updateTimerUI();
+  }
+
+  // --- Fin de partida ---
+  function finishPuzzle() {
+    if (finished) return;
+    finished = true;
+    clearInterval(timerId);
+
+    const wasSolved = solved;
+    // Aplicar animación "solved" a todas las piezas si ganó
+    if (wasSolved) {
+      const tiles = document.querySelectorAll(".puzzle-tile:not(.empty)");
+      tiles.forEach(t => t.classList.add("solved"));
+      beep(880, 0.12, 0.04);
+      setTimeout(() => beep(1040, 0.14, 0.04), 140);
+    } else {
+      beep(240, 0.18, 0.03);
+    }
+
+    // Pequeña pausa para que se aprecie el estado final
+    setTimeout(() => {
+      showPuzzleResults(wasSolved, moves, timeLeft, DURATION);
+    }, wasSolved ? 900 : 400);
+  }
+
+  function showPuzzleResults(wasSolved, moves, remaining, total) {
+    const usedTime = Math.round(total - remaining);
+    let headline, sub;
+    if (wasSolved) {
+      if (moves <= 40)      headline = "Resuelto. Y con estilo.";
+      else if (moves <= 90) headline = "Resuelto. Nada mal.";
+      else                  headline = "Resuelto. Lo importante es que quedó.";
+      sub = `Armaste el logo 75° W en ${moves} ${moves === 1 ? "movimiento" : "movimientos"} y ${usedTime} segundos.`;
+    } else {
+      headline = "Se acabó el tiempo.";
+      sub = `El logo quedó a medio armar. La próxima sale.`;
+    }
+    setView(`
+      <section class="exp">
+        <p class="eyebrow">Fin del rompecabezas</p>
+        <div class="end-intro">
+          <h1 class="end-headline">${escapeHtml(headline)}</h1>
+          <p class="end-sub">${escapeHtml(sub)}</p>
+        </div>
+        <div class="end-card">
+          <p class="end-card-mark">75° W</p>
+          <p class="end-card-title">Ahora falta la parte importante.</p>
+          <p class="end-card-line">☕ Prepararlo de verdad. Tu drip 75° W te está esperando.</p>
+        </div>
+        ${endActionsHTML()}
+        <p class="end-fine">Nadie gana, nadie pierde. Solo se juega un rato.</p>
+      </section>
+    `);
+    wireEndActions();
+  }
+
+  // --- Render principal ---
+  setView(`
+    <section class="exp">
+      <p class="eyebrow">Experiencia 75° W</p>
+      <h1 class="exp-title">Arma el logo</h1>
+      <p class="exp-sub">Desliza las piezas para reconstruir el logo 75° W. Tienes 1 minuto.</p>
+
+      <div class="puzzle-hud">
+        <div class="puzzle-moves">Movimientos: <strong id="puzzle-moves">00</strong></div>
+        <div class="puzzle-time" id="puzzle-time">${Math.ceil(DURATION)}s</div>
+      </div>
+
+      <div class="puzzle-timerbar" id="puzzle-timerbar"><span></span></div>
+
+      <div class="puzzle-preview">
+        <div class="puzzle-preview-img" id="puzzle-preview-img">
+          <img src="${PUZZLE_IMAGE_URL}" alt="Logo 75° W" />
+        </div>
+        <div class="puzzle-preview-text">
+          <strong>Meta</strong><br>Reconstruir el logo 75° W con las piezas deslizantes.
+        </div>
+      </div>
+
+      <div class="puzzle-board" id="puzzle-board"></div>
+
+      <div class="puzzle-actions">
+        <button class="btn btn-ghost btn-sm" id="puzzle-shuffle">Barajar de nuevo</button>
+      </div>
+    </section>
+  `);
+
+  // Detectar si la imagen carga bien; si no, activar fallback visual.
+  const testImg = new Image();
+  testImg.onload = () => {
+    imgLoaded = true;
+    imgFailed = false;
+    // Si ya hay tablero renderizado, repintarlo con la imagen real.
+    if (document.getElementById("puzzle-board")) renderBoard(false);
+    // Actualizar el preview (por si el src por defecto falló)
+    const prev = document.getElementById("puzzle-preview-img");
+    if (prev) prev.innerHTML = `<img src="${PUZZLE_IMAGE_URL}" alt="Logo 75° W" />`;
+  };
+  testImg.onerror = () => {
+    imgLoaded = false;
+    imgFailed = true;
+    if (document.getElementById("puzzle-board")) renderBoard(false);
+    // Fallback tipográfico en el preview
+    const prev = document.getElementById("puzzle-preview-img");
+    if (prev) {
+      prev.innerHTML = `<div style="display:grid;place-items:center;width:100%;height:100%;font-family:var(--font-serif);font-weight:700;color:var(--accent);font-size:14px;letter-spacing:.08em;">75° W</div>`;
+    }
+  };
+  testImg.src = PUZZLE_IMAGE_URL;
+
+  // Preparar el tablero desarmado
+  shuffleBoard();
+  renderBoard(false);
+  updateMovesUI();
+  updateTimerUI();
+
+  // Click / tap en las piezas
+  const boardEl = document.getElementById("puzzle-board");
+  boardEl.addEventListener("click", (e) => {
+    const tile = e.target.closest(".puzzle-tile");
+    if (!tile) return;
+    const pos = Number(tile.dataset.pos);
+    moveTile(pos);
+  });
+
+  // Botón "Barajar de nuevo"
+  document.getElementById("puzzle-shuffle").addEventListener("click", () => {
+    if (finished) return;
+    beep(500, 0.06, 0.025);
+    moves = 0;
+    updateMovesUI();
+    shuffleBoard();
+    renderBoard(false);
+    // Reiniciar temporizador
+    timeLeft = DURATION;
+    updateTimerUI();
+  });
+
+  // Tick del temporizador
+  let lastTick = performance.now();
+  const TICK_MS = 100;
+  timerId = setInterval(() => {
+    const now = performance.now();
+    const dt = (now - lastTick) / 1000;
+    lastTick = now;
+    tick(dt);
+  }, TICK_MS);
+
+  registerCleanup(() => {
+    finished = true;
+    clearInterval(timerId);
+  });
+}
+
+/* ================================================================
    PIEZAS COMPARTIDAS DE CIERRE
    ================================================================ */
 function endActionsHTML() {
   return `
     <div class="end-actions">
-      <button class="btn btn-primary" id="ig-btn">Seguir a @75gradosw</button>
+      <button class="btn btn-primary" id="ig-btn">
+        ${INSTAGRAM_SVG}
+        <span>Seguir a @75gradosw</span>
+      </button>
       <button class="btn btn-ghost" id="another-btn">Probar otra experiencia</button>
     </div>
   `;
