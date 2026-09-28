@@ -25,8 +25,6 @@
     --pad-x: 22px;
     --topbar-h: 58px;
     --font-scale: 1;
-    /* Tamaño de la cuadrícula del rompecabezas (4 = 4x4). Se sobrescribe
-       desde JS al iniciar el puzzle para que CSS y cálculo coincidan. */
     --puzzle-size: 4;
   }
 
@@ -880,9 +878,6 @@
     100% { box-shadow: inset 0 0 0 2px var(--accent); opacity: 1; }
   }
 
-  /* Wrapper de la imagen dentro de cada pieza.
-     El tamaño real de la imagen interna se calcula con var(--puzzle-size),
-     así no hay valores hardcodeados en CSS. */
   .puzzle-img-wrapper {
     position: absolute;
     inset: 0;
@@ -891,7 +886,6 @@
   }
   .puzzle-img-wrapper img {
     position: absolute;
-    top: 0; left: 0;
     width: calc(100% * var(--puzzle-size));
     height: calc(100% * var(--puzzle-size));
     max-width: none;
@@ -916,8 +910,33 @@
   .puzzle-actions {
     display: flex; gap: 10px;
     margin-top: 18px;
+    flex-wrap: wrap;
   }
-  .puzzle-actions .btn { padding: 14px 18px; font-size: calc(15px * var(--font-scale)); }
+  .puzzle-actions .btn {
+    flex: 1 1 140px;
+    padding: 14px 18px;
+    font-size: calc(15px * var(--font-scale));
+  }
+  /* El botón de piedad lleva un acento sutil pero distinto al primario,
+     así se distingue sin robar protagonismo. */
+  .btn-mercy {
+    background: var(--accent-soft);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-mercy:hover {
+    background: var(--accent);
+    color: var(--accent-contrast);
+    border-color: var(--accent);
+  }
+  .btn-mercy .mercy-ico { font-family: var(--font-emoji); font-size: calc(17px * var(--font-scale)); }
+  /* Micro animación al pulsarlo para dar feedback claro */
+  .btn-mercy.bumped { animation: mercyBump .35s cubic-bezier(.2,1.4,.4,1); }
+  @keyframes mercyBump {
+    0%   { transform: scale(1); }
+    35%  { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
 
   /* ============================================================
      SPLASH
@@ -1221,11 +1240,12 @@
    CONFIGURACIÓN EDITABLE
    ---------------------------------------------------------------- */
 const INSTAGRAM_URL    = "https://www.instagram.com/75gradosw/";
-const LOGO_URL         = "";  // opcional: ruta del logo de la marca (topbar)
+const LOGO_URL         = "";
 const PUZZLE_IMAGE_URL = "https://raw.githubusercontent.com/elmismogusdesiempre/75gradosactivacion/main/cuadrado.jpg";
-/* Tamaño de la cuadrícula del rompecabezas. 4 => 4x4 (15 piezas + hueco).
-   Cambiar este valor re-configura automáticamente CSS y lógica. */
+/* Tamaño de la cuadrícula del rompecabezas. 4 => 4x4 (15 piezas + hueco). */
 const PUZZLE_GRID_SIZE = 4;
+/* Segundos extra que otorga cada pulsación del botón "Piedad, más tiempo". */
+const PUZZLE_MERCY_SECONDS = 60;
 
 const INSTAGRAM_SVG = `
   <svg class="ig-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -2332,25 +2352,22 @@ function showBaristaResults(ordersDone) {
    ================================================================ */
 
 function showLogoPuzzle() {
-  const SIZE = PUZZLE_GRID_SIZE;             // 4 por defecto
+  const SIZE = PUZZLE_GRID_SIZE;
   const TOTAL = SIZE * SIZE;
-  const EMPTY = TOTAL - 1;                    // el hueco vive en el último índice
+  const EMPTY = TOTAL - 1;
   const speedMult = settings.speed === "lenta" ? 0.85
                   : settings.speed === "rapida" ? 1.25
                   : 1;
-  const DURATION = 60 / speedMult;            // 1 minuto (ajustado por velocidad)
+  const DURATION = 60 / speedMult;
 
-  // Sincronizar el CSS con el tamaño de cuadrícula elegido.
-  // Sin valores hardcodeados: el CSS lee var(--puzzle-size) para
-  // grid-template-columns, grid-template-rows y el tamaño de la imagen.
+  // Sincronizar CSS con el tamaño de cuadrícula elegido.
   document.documentElement.style.setProperty("--puzzle-size", String(SIZE));
 
-  // Estado del tablero: array donde board[pos] = número de pieza (0..EMPTY-1) o EMPTY.
-  // La posición objetivo de la pieza i es el índice i.
   let board = [];
-
-  // Métricas
   let moves = 0;
+  // `maxTime` empieza en la duración inicial y crece con cada "piedad",
+  // así la barra de progreso siempre tiene un rango coherente [0, maxTime].
+  let maxTime = DURATION;
   let timeLeft = DURATION;
   let finished = false;
   let solved = false;
@@ -2358,7 +2375,6 @@ function showLogoPuzzle() {
   let timerId = null;
   let imgFailed = false;
 
-  // --- Utilidades del puzzle ---
   function isSolved() {
     for (let i = 0; i < TOTAL; i++) {
       if (board[i] !== i) return false;
@@ -2377,8 +2393,6 @@ function showLogoPuzzle() {
     return list;
   }
 
-  // Baraja haciendo N movimientos al azar desde la solución.
-  // Garantiza que el puzzle resultante sea siempre resoluble.
   function shuffleBoard() {
     board = [];
     for (let i = 0; i < TOTAL; i++) board[i] = i;
@@ -2396,9 +2410,7 @@ function showLogoPuzzle() {
     if (isSolved()) shuffleBoard();
   }
 
-  function emptyPos() {
-    return board.indexOf(EMPTY);
-  }
+  function emptyPos() { return board.indexOf(EMPTY); }
 
   function canMove(pos) {
     const e = emptyPos();
@@ -2426,25 +2438,17 @@ function showLogoPuzzle() {
     }
   }
 
-  // --- Render ---
-  // Cada pieza muestra la imagen dentro de un wrapper con overflow hidden.
-  // La imagen se dibuja a "SIZE × SIZE" veces el tamaño de la celda y se
-  // desplaza con transform: translate() para que solo se vea el fragmento
-  // correspondiente a esta pieza.
   function tileInner(pieceIndex) {
     const row = Math.floor(pieceIndex / SIZE);
     const col = pieceIndex % SIZE;
-    // Desplazamiento en porcentaje del tamaño de la CELDA.
-    // Al mover la imagen (que mide SIZE × celda) en -col*100% y -row*100%
-    // estamos mostrando exactamente el fragmento (row, col).
-    const tx = -(col * 100);
-    const ty = -(row * 100);
+    const left = -(col * 100);
+    const top  = -(row * 100);
     return `
       <div class="puzzle-img-wrapper">
         <img src="${PUZZLE_IMAGE_URL}"
              alt=""
              draggable="false"
-             style="transform: translate(${tx}%, ${ty}%);" />
+             style="left:${left}%; top:${top}%;" />
       </div>
     `;
   }
@@ -2477,7 +2481,7 @@ function showLogoPuzzle() {
     const bar = document.getElementById("puzzle-timerbar");
     const timeLabel = document.getElementById("puzzle-time");
     if (bar) {
-      const pct = Math.max(0, Math.min(1, timeLeft / DURATION));
+      const pct = Math.max(0, Math.min(1, timeLeft / maxTime));
       const fill = bar.querySelector("span");
       if (fill) fill.style.width = (pct * 100).toFixed(1) + "%";
       bar.classList.toggle("warn", timeLeft <= 10);
@@ -2498,6 +2502,24 @@ function showLogoPuzzle() {
     updateTimerUI();
   }
 
+  // "Piedad": suma segundos al temporizador actual y al máximo,
+  // sin límite de usos.
+  function addMercy() {
+    if (finished) return;
+    timeLeft += PUZZLE_MERCY_SECONDS;
+    maxTime += PUZZLE_MERCY_SECONDS;
+    updateTimerUI();
+    beep(700, 0.06, 0.025);
+    setTimeout(() => beep(880, 0.06, 0.025), 80);
+    // Feedback visual en el propio botón
+    const btn = document.getElementById("puzzle-mercy");
+    if (btn) {
+      btn.classList.remove("bumped");
+      void btn.offsetWidth;
+      btn.classList.add("bumped");
+    }
+  }
+
   function finishPuzzle() {
     if (finished) return;
     finished = true;
@@ -2512,7 +2534,7 @@ function showLogoPuzzle() {
       beep(240, 0.18, 0.03);
     }
 
-    setTimeout(() => showPuzzleResults(wasSolved, moves, timeLeft, DURATION), wasSolved ? 900 : 400);
+    setTimeout(() => showPuzzleResults(wasSolved, moves, timeLeft, maxTime), wasSolved ? 900 : 400);
   }
 
   function showPuzzleResults(wasSolved, movesCount, remaining, total) {
@@ -2546,7 +2568,6 @@ function showLogoPuzzle() {
     wireEndActions();
   }
 
-  // --- Render principal ---
   setView(`
     <section class="exp">
       <p class="eyebrow">Experiencia 75° W</p>
@@ -2573,11 +2594,14 @@ function showLogoPuzzle() {
 
       <div class="puzzle-actions">
         <button class="btn btn-ghost btn-sm" id="puzzle-shuffle">Barajar de nuevo</button>
+        <button class="btn btn-mercy btn-sm" id="puzzle-mercy">
+          <span class="mercy-ico">⏳</span>
+          <span>Piedad, más tiempo</span>
+        </button>
       </div>
     </section>
   `);
 
-  // Detección de imagen: si carga, se usa; si no, fallback con número.
   const testImg = new Image();
   testImg.onload = () => {
     imgFailed = false;
@@ -2597,13 +2621,11 @@ function showLogoPuzzle() {
   };
   testImg.src = PUZZLE_IMAGE_URL;
 
-  // Preparar el tablero desarmado
   shuffleBoard();
   renderBoard(false);
   updateMovesUI();
   updateTimerUI();
 
-  // Interacción: clic/tap en cualquier pieza
   const boardEl = document.getElementById("puzzle-board");
   boardEl.addEventListener("click", (e) => {
     const tile = e.target.closest(".puzzle-tile");
@@ -2612,7 +2634,6 @@ function showLogoPuzzle() {
     moveTile(pos);
   });
 
-  // Botón "Barajar de nuevo"
   document.getElementById("puzzle-shuffle").addEventListener("click", () => {
     if (finished) return;
     beep(500, 0.06, 0.025);
@@ -2620,11 +2641,12 @@ function showLogoPuzzle() {
     updateMovesUI();
     shuffleBoard();
     renderBoard(false);
-    timeLeft = DURATION;
+    timeLeft = maxTime;
     updateTimerUI();
   });
 
-  // Tick del temporizador
+  document.getElementById("puzzle-mercy").addEventListener("click", addMercy);
+
   let lastTick = performance.now();
   const TICK_MS = 100;
   timerId = setInterval(() => {
