@@ -138,12 +138,6 @@
 
   .exp { display: flex; flex-direction: column; }
 
-  /* Variante de experiencia que debe caber en una sola pantalla (sin scroll). */
-  .exp-fit {
-    min-height: calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 44px);
-    justify-content: flex-start;
-  }
-
   .eyebrow {
     font-size: calc(12px * var(--font-scale));
     letter-spacing: .2em; text-transform: uppercase;
@@ -452,7 +446,6 @@
 
   .game-stage {
     position: relative; width: 100%;
-    /* En móvil el canvas se ajusta al alto disponible para que quepa sin scroll */
     height: min(
       calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 190px),
       480px
@@ -793,6 +786,32 @@
   }
   .puzzle-timerbar.warn > span { background: #C77C4A; }
 
+  /* Selector de dificultad del puzzle (3x3 o 4x4) */
+  .puzzle-difficulty {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .puzzle-diff-label {
+    font-size: calc(11px * var(--font-scale));
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 700;
+    flex: 0 0 auto;
+  }
+  .puzzle-difficulty .seg {
+    flex: 1;
+    padding: 3px;
+    gap: 3px;
+  }
+  .puzzle-difficulty .seg button {
+    padding: 8px 6px;
+    font-size: calc(13.5px * var(--font-scale));
+    border-radius: 8px;
+  }
+
   .puzzle-preview {
     display: flex; align-items: center; gap: 12px;
     background: var(--surface);
@@ -801,12 +820,6 @@
     padding: 10px 12px;
     margin-bottom: 12px;
     box-shadow: var(--shadow);
-  }
-  .puzzle-preview-label {
-    font-size: calc(11px * var(--font-scale));
-    letter-spacing: .18em; text-transform: uppercase;
-    color: var(--muted); font-weight: 700; line-height: 1.3;
-    flex: 0 0 auto;
   }
   .puzzle-preview-img {
     width: 52px; height: 52px;
@@ -830,11 +843,9 @@
   }
   .puzzle-preview-text strong { color: var(--text); font-weight: 700; }
 
-  /* El tablero se ajusta al espacio vertical disponible para no obligar
-     scroll en móvil. Mantiene proporción 1:1 con aspect-ratio. */
   .puzzle-board {
     width: 100%;
-    max-width: min(100%, calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 280px));
+    max-width: min(100%, calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 340px));
     margin: 0 auto;
     aspect-ratio: 1;
     background: var(--surface);
@@ -1132,8 +1143,11 @@
   #toast.show { opacity: 1; transform: translate(-50%, 0); }
 
   /* ============================================================
-     AJUSTES PARA PANTALLAS BAJAS (móvil horizontal o móviles pequeños)
+     UTILIDADES
      ============================================================ */
+  .mt-lg { margin-top: 28px; }
+  .center { text-align: center; }
+
   @media (max-height: 700px) {
     :root { --topbar-h: 52px; }
     main {
@@ -1154,7 +1168,7 @@
       min-height: 220px;
     }
     .puzzle-board {
-      max-width: min(100%, calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 240px));
+      max-width: min(100%, calc(100dvh - var(--topbar-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 300px));
     }
     .barista-order-bubble { padding: 26px 16px 16px; margin-bottom: 10px; }
     .barista-cup { padding: 12px 12px 14px; margin-bottom: 10px; }
@@ -1282,7 +1296,8 @@
 const INSTAGRAM_URL    = "https://www.instagram.com/75gradosw/";
 const LOGO_URL         = "";
 const PUZZLE_IMAGE_URL = "https://raw.githubusercontent.com/elmismogusdesiempre/75gradosactivacion/main/cuadrado.jpg";
-/* Tamaño de la cuadrícula del rompecabezas. 4 => 4x4 (15 piezas + hueco). */
+/* Tamaño por defecto del rompecabezas. Se puede cambiar a 3 desde el
+   propio juego; el valor elegido se persiste en localStorage. */
 const PUZZLE_GRID_SIZE = 4;
 /* Segundos extra que otorga cada pulsación del botón "Piedad, más tiempo". */
 const PUZZLE_MERCY_SECONDS = 60;
@@ -1297,6 +1312,12 @@ const INSTAGRAM_SVG = `
   </svg>
 `;
 
+/* Normaliza el tamaño del puzzle. Solo acepta 3 o 4. */
+function normalizePuzzleSize(v) {
+  const n = Number(v);
+  return (n === 3 || n === 4) ? n : PUZZLE_GRID_SIZE;
+}
+
 /* ----------------------------------------------------------------
    ESTADO Y PREFERENCIAS
    ---------------------------------------------------------------- */
@@ -1306,7 +1327,8 @@ const DEFAULT_SETTINGS = {
   speed: "normal",
   coffee: "",
   sound: false,
-  baristaHelp: false
+  baristaHelp: false,
+  puzzleSize: 4
 };
 
 let settings = { ...DEFAULT_SETTINGS };
@@ -1320,6 +1342,7 @@ function loadSettings() {
   try {
     const raw = localStorage.getItem("w75_settings");
     if (raw) settings = { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    settings.puzzleSize = normalizePuzzleSize(settings.puzzleSize);
   } catch (e) { settings = { ...DEFAULT_SETTINGS }; }
 }
 function saveSettings() {
@@ -2392,14 +2415,18 @@ function showBaristaResults(ordersDone) {
    ================================================================ */
 
 function showLogoPuzzle() {
-  const SIZE = PUZZLE_GRID_SIZE;
-  const TOTAL = SIZE * SIZE;
-  const EMPTY = TOTAL - 1;
+  /* El tamaño vive como variable mutable para permitir cambiarlo en
+     vivo desde el selector de dificultad dentro del propio juego. */
+  let SIZE = normalizePuzzleSize(settings.puzzleSize);
+  let TOTAL = SIZE * SIZE;
+  let EMPTY = TOTAL - 1;
+
   const speedMult = settings.speed === "lenta" ? 0.85
                   : settings.speed === "rapida" ? 1.25
                   : 1;
   const DURATION = 60 / speedMult;
 
+  // Sincronizar CSS con el tamaño de cuadrícula elegido.
   document.documentElement.style.setProperty("--puzzle-size", String(SIZE));
 
   let board = [];
@@ -2527,6 +2554,11 @@ function showLogoPuzzle() {
       timeLabel.textContent = Math.max(0, Math.ceil(timeLeft)) + "s";
     }
   }
+  function updateSizeUI() {
+    document.querySelectorAll("#puzzle-size-seg button").forEach(b => {
+      b.classList.toggle("selected", Number(b.dataset.size) === SIZE);
+    });
+  }
   function tick(dt) {
     if (finished) return;
     timeLeft -= dt;
@@ -2537,6 +2569,30 @@ function showLogoPuzzle() {
       return;
     }
     updateTimerUI();
+  }
+
+  /* Cambia el tamaño del puzzle en vivo. Reinicia la partida con el
+     nuevo grid, dejando tiempo y movimientos frescos. */
+  function applyPuzzleSize(newSize) {
+    const n = normalizePuzzleSize(newSize);
+    if (n === SIZE) return;
+    SIZE = n;
+    TOTAL = SIZE * SIZE;
+    EMPTY = TOTAL - 1;
+    settings.puzzleSize = n;
+    saveSettings();
+    document.documentElement.style.setProperty("--puzzle-size", String(SIZE));
+
+    // Reinicio limpio
+    moves = 0;
+    timeLeft = DURATION;
+    maxTime = DURATION;
+    updateMovesUI();
+    shuffleBoard();
+    renderBoard(false);
+    updateTimerUI();
+    updateSizeUI();
+    beep(660, 0.06, 0.025);
   }
 
   function addMercy() {
@@ -2568,17 +2624,19 @@ function showLogoPuzzle() {
       beep(240, 0.18, 0.03);
     }
 
-    setTimeout(() => showPuzzleResults(wasSolved, moves, timeLeft, maxTime), wasSolved ? 900 : 400);
+    setTimeout(() => showPuzzleResults(wasSolved, moves, timeLeft, maxTime, SIZE), wasSolved ? 900 : 400);
   }
 
-  function showPuzzleResults(wasSolved, movesCount, remaining, total) {
+  function showPuzzleResults(wasSolved, movesCount, remaining, total, gridSize) {
     const usedTime = Math.round(total - remaining);
+    const gridLabel = `${gridSize} × ${gridSize}`;
     let headline, sub;
     if (wasSolved) {
-      if (movesCount <= 40)      headline = "Resuelto. Y con estilo.";
-      else if (movesCount <= 90) headline = "Resuelto. Nada mal.";
-      else                       headline = "Resuelto. Lo importante es que quedó.";
-      sub = `Armaste el logo 75° W en ${movesCount} ${movesCount === 1 ? "movimiento" : "movimientos"} y ${usedTime} segundos.`;
+      if (movesCount <= 20 && gridSize === 3)      headline = "Resuelto. Y con estilo.";
+      else if (movesCount <= 40)                   headline = "Resuelto. Y con estilo.";
+      else if (movesCount <= 90)                   headline = "Resuelto. Nada mal.";
+      else                                         headline = "Resuelto. Lo importante es que quedó.";
+      sub = `Armaste el logo 75° W (${gridLabel}) en ${movesCount} ${movesCount === 1 ? "movimiento" : "movimientos"} y ${usedTime} segundos.`;
     } else {
       headline = "Se acabó el tiempo.";
       sub = `El logo quedó a medio armar. La próxima sale.`;
@@ -2614,6 +2672,14 @@ function showLogoPuzzle() {
       </div>
 
       <div class="puzzle-timerbar" id="puzzle-timerbar"><span></span></div>
+
+      <div class="puzzle-difficulty">
+        <span class="puzzle-diff-label">Dificultad</span>
+        <div class="seg" id="puzzle-size-seg">
+          <button type="button" data-size="3">3 × 3</button>
+          <button type="button" data-size="4">4 × 4</button>
+        </div>
+      </div>
 
       <div class="puzzle-preview">
         <div class="puzzle-preview-img" id="puzzle-preview-img">
@@ -2659,6 +2725,7 @@ function showLogoPuzzle() {
   renderBoard(false);
   updateMovesUI();
   updateTimerUI();
+  updateSizeUI();
 
   const boardEl = document.getElementById("puzzle-board");
   boardEl.addEventListener("click", (e) => {
@@ -2666,6 +2733,13 @@ function showLogoPuzzle() {
     if (!tile) return;
     const pos = Number(tile.dataset.pos);
     moveTile(pos);
+  });
+
+  document.querySelectorAll("#puzzle-size-seg button").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (finished) return;
+      applyPuzzleSize(Number(btn.dataset.size));
+    });
   });
 
   document.getElementById("puzzle-shuffle").addEventListener("click", () => {
